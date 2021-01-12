@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.apache.cordova.CallbackContext;
@@ -29,21 +29,28 @@ public class CDVBroadcaster extends CordovaPlugin {
 
     final JSONObject extras;
     final Integer flags;
-    final String category;
+    final String packageName;
 
     final boolean isAndroidSpecific;
 
     Data(final JSONObject userData) {
-      if (userData.has("extras") && userData.has("flags") && userData.has("category")) {
+      if (userData.has("extras") && userData.has("flags")) {
         extras = userData.optJSONObject("extras");
         flags = userData.optInt("flags");
-        category = userData.optString("category");
+        if (userData.optString("category")) {
+          category = userData.optString("category");
+        }
         isAndroidSpecific = true;
       } else {
         extras = userData;
         flags = null;
-        category = null;
         isAndroidSpecific = false;
+      }
+
+      if (userData.has("packageName")) {
+        packageName = userData.optString("packageName");
+      } else {
+        packageName = null;
       }
     }
 
@@ -68,7 +75,7 @@ public class CDVBroadcaster extends CordovaPlugin {
   public static final String EVENTNAME_ERROR = "event name null or empty.";
 
   final java.util.Map<String, BroadcastReceiverHolder> receiverMap =
-    new java.util.HashMap<String, BroadcastReceiverHolder>(10);
+          new java.util.HashMap<String, BroadcastReceiverHolder>(10);
 
   /**
    * fire event in javascript client context
@@ -169,13 +176,22 @@ public class CDVBroadcaster extends CordovaPlugin {
 
     if (userData.isAndroidSpecific) {
       intent.addFlags(userData.flags);
-      intent.addCategory(userData.category);
+      if (userData.category) {
+        intent.addCategory(userData.category);
+      }
     }
 
-    final Bundle bundle = (userData == null) ? new Bundle() : toBundle(userData.extras);
+    try {
+      if (userData.packageName != null) {
+        Log.w(TAG, userData.packageName);
+        intent.setPackage(userData.packageName);
+      }
+    } catch (Exception e) {
+      Log.w(TAG, e);
+    }
 
+    final Bundle bundle = (userData == null) ? new Bundle() : toBundle(extras);
     intent.putExtras(bundle);
-
     sendBroadcast(intent, isGlobal);
   }
 
@@ -343,11 +359,11 @@ public class CDVBroadcaster extends CordovaPlugin {
     }
     // Boolean | Integer | Long | Double
     else if (
-      value instanceof String
-        || value instanceof Boolean
-        || value instanceof Integer
-        || value instanceof Long
-        || value instanceof Double) {
+            value instanceof String
+                    || value instanceof Boolean
+                    || value instanceof Integer
+                    || value instanceof Long
+                    || value instanceof Double) {
       return value;
     }
     // Other(s)
