@@ -30,6 +30,7 @@ public class CDVBroadcaster extends CordovaPlugin {
     final JSONObject extras;
     final Integer flags;
     final String packageName;
+    final String category;
 
     final boolean isAndroidSpecific;
 
@@ -37,13 +38,16 @@ public class CDVBroadcaster extends CordovaPlugin {
       if (userData.has("extras") && userData.has("flags")) {
         extras = userData.optJSONObject("extras");
         flags = userData.optInt("flags");
-        if (userData.optString("category")) {
+        if (userData.has("category")) {
           category = userData.optString("category");
+        } else {
+          category = "";
         }
         isAndroidSpecific = true;
       } else {
         extras = userData;
         flags = null;
+        category = "";
         isAndroidSpecific = false;
       }
 
@@ -176,7 +180,7 @@ public class CDVBroadcaster extends CordovaPlugin {
 
     if (userData.isAndroidSpecific) {
       intent.addFlags(userData.flags);
-      if (userData.category) {
+      if (userData.category != null) {
         intent.addCategory(userData.category);
       }
     }
@@ -190,7 +194,7 @@ public class CDVBroadcaster extends CordovaPlugin {
       Log.w(TAG, e);
     }
 
-    final Bundle bundle = (userData == null) ? new Bundle() : toBundle(extras);
+    final Bundle bundle = (userData == null) ? new Bundle() : toBundle(userData.extras);
     intent.putExtras(bundle);
     sendBroadcast(intent, isGlobal);
   }
