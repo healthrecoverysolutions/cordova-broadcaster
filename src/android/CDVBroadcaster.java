@@ -30,7 +30,7 @@ public class CDVBroadcaster extends CordovaPlugin {
     final JSONObject extras;
     final Integer flags;
     final String packageName;
-    final String category;
+    String category = null;
 
     final boolean isAndroidSpecific;
 
@@ -40,14 +40,12 @@ public class CDVBroadcaster extends CordovaPlugin {
         flags = userData.optInt("flags");
         if (userData.has("category")) {
           category = userData.optString("category");
-        } else {
-          category = "";
         }
+
         isAndroidSpecific = true;
       } else {
         extras = userData;
         flags = null;
-        category = "";
         isAndroidSpecific = false;
       }
 
